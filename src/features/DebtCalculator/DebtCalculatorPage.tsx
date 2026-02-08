@@ -5,7 +5,9 @@ import { useAutoScroll } from './hooks/useAutoScroll';
 import CalculatorHeader from './components/CalculatorHeader';
 import BotMessage from './components/BotMessage';
 import CardInputList from './components/CardInputList';
+import CreditScoreSelector from './components/CreditScoreSelector';
 import DebtSummaryStats from './components/DebtSummaryStats';
+import DebtPayoffChart from './components/DebtPayoffChart';
 import ConsolidationControls from './components/ConsolidationControls';
 import InterestComparison from './components/InterestComparison';
 import InvestmentProjection from './components/InvestmentProjection';
@@ -24,14 +26,15 @@ export default function DebtCalculatorPage() {
     setLoanTerm,
     setUserAge,
     setAnnualReturn,
+    setCreditScore,
     reset,
     hasValidCards,
   } = useCalculatorReducer();
 
-  const { debtSummary, consolidation, investmentData } =
+  const { debtSummary, consolidation, debtPayoffData, investmentData } =
     useDebtCalculations(state);
 
-  const scrollRef = useAutoScroll([state.step]);
+  const scrollRef = useAutoScroll([state.step, state.creditScore]);
 
   return (
     <Box
@@ -68,9 +71,9 @@ export default function DebtCalculatorPage() {
               fontFamily: "'Work Sans', sans-serif",
             }}
           >
-            👋 Let&apos;s find out how much you could save! Add your credit
-            cards below — I&apos;ll show you the true cost of that debt and how
-            to crush it.
+            Let&apos;s find out how much you could save! Add your credit cards
+            below — I&apos;ll show you the true cost of that debt and how to
+            crush it.
           </Typography>
         </BotMessage>
 
@@ -84,8 +87,19 @@ export default function DebtCalculatorPage() {
           canSubmit={hasValidCards}
         />
 
-        {/* ── STEP 2: DEBT SUMMARY + CONSOLIDATION ── */}
-        {state.step >= 2 && debtSummary.totalBalance > 0 && (
+        {/* ── STEP 2: CREDIT SCORE (gated step with skip) ── */}
+        {state.step >= 2 && (
+          <CreditScoreSelector
+            selected={state.creditScore}
+            onSelect={setCreditScore}
+            onContinue={() => goToStep(3)}
+            onSkip={() => goToStep(3)}
+            showActions={state.step === 2}
+          />
+        )}
+
+        {/* ── STEP 3: DEBT ANALYSIS + CONSOLIDATION ── */}
+        {state.step >= 3 && debtSummary.totalBalance > 0 && (
           <>
             <BotMessage delay={200}>
               <Typography
@@ -98,8 +112,7 @@ export default function DebtCalculatorPage() {
                   fontFamily: "'Work Sans', sans-serif",
                 }}
               >
-                📊 Here&apos;s the picture. At minimum payments, you&apos;d
-                pay{' '}
+                Here&apos;s the picture. At current payments, you&apos;d pay{' '}
                 <Box component="strong" sx={{ color: 'custom.red' }}>
                   {formatFull(Math.round(debtSummary.totalInterest))}
                 </Box>{' '}
@@ -112,9 +125,14 @@ export default function DebtCalculatorPage() {
             <ConsolidationControls
               loanApr={state.loanApr}
               loanTerm={state.loanTermYears}
+              creditScore={state.creditScore}
               onAprChange={setLoanApr}
               onTermChange={setLoanTerm}
             />
+
+            {consolidation && debtPayoffData.length > 1 && (
+              <DebtPayoffChart data={debtPayoffData} />
+            )}
 
             {consolidation && (
               <InterestComparison
@@ -123,14 +141,14 @@ export default function DebtCalculatorPage() {
                 loanApr={state.loanApr}
                 loanTerm={state.loanTermYears}
                 step={state.step}
-                onAdvance={() => goToStep(3)}
+                onAdvance={() => goToStep(4)}
               />
             )}
           </>
         )}
 
-        {/* ── STEP 3: INVESTMENT PROJECTION ── */}
-        {state.step >= 3 &&
+        {/* ── STEP 4: INVESTMENT PROJECTION ── */}
+        {state.step >= 4 &&
           consolidation &&
           consolidation.interestSaved > 0 && (
             <>
@@ -145,16 +163,15 @@ export default function DebtCalculatorPage() {
                     fontFamily: "'Work Sans', sans-serif",
                   }}
                 >
-                  🚀 Here&apos;s where it gets exciting. Once your debt is
-                  paid off in{' '}
+                  Here&apos;s where it gets exciting. Once your debt is paid off
+                  in{' '}
                   <strong>
                     {state.loanTermYears} year
                     {state.loanTermYears > 1 ? 's' : ''}
                   </strong>
                   , what if you invested that same{' '}
                   <strong>
-                    {formatFull(Math.round(consolidation.monthlyPayment))}
-                    /month
+                    {formatFull(Math.round(consolidation.monthlyPayment))}/month
                   </strong>{' '}
                   into the market until you&apos;re 90?
                 </Typography>

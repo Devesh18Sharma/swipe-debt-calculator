@@ -3,9 +3,10 @@ import type {
   CalculatorState,
   CalculatorAction,
   CreditCard,
+  CreditScoreRange,
   Step,
 } from '../types';
-import { createInitialState } from '../constants';
+import { createInitialState, getAprForCreditScore } from '../constants';
 import { generateId } from '../utils/formatters';
 
 function calculatorReducer(
@@ -18,7 +19,7 @@ function calculatorReducer(
         ...state,
         cards: [
           ...state.cards,
-          { id: generateId(), name: '', balance: 0, apr: 0 },
+          { id: generateId(), name: '', balance: 0, apr: 0, monthlyPayment: 0 },
         ],
       };
 
@@ -52,6 +53,13 @@ function calculatorReducer(
 
     case 'SET_ANNUAL_RETURN':
       return { ...state, annualReturn: action.payload };
+
+    case 'SET_CREDIT_SCORE':
+      return {
+        ...state,
+        creditScore: action.payload,
+        loanApr: getAprForCreditScore(action.payload),
+      };
 
     case 'RESET':
       return createInitialState();
@@ -106,6 +114,12 @@ export function useCalculatorReducer() {
     [],
   );
 
+  const setCreditScore = useCallback(
+    (score: CreditScoreRange) =>
+      dispatch({ type: 'SET_CREDIT_SCORE', payload: score }),
+    [],
+  );
+
   const reset = useCallback(() => dispatch({ type: 'RESET' }), []);
 
   const hasValidCards = useMemo(
@@ -123,6 +137,7 @@ export function useCalculatorReducer() {
     setLoanTerm,
     setUserAge,
     setAnnualReturn,
+    setCreditScore,
     reset,
     hasValidCards,
   };

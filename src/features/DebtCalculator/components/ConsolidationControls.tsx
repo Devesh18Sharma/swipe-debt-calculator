@@ -1,17 +1,20 @@
 import { Box, Typography } from '@mui/material';
 import BotMessage from './BotMessage';
 import SliderControl from './SliderControl';
+import type { CreditScoreRange } from '../types';
 import {
   LOAN_APR_MIN,
   LOAN_APR_MAX,
   LOAN_APR_STEP,
   LOAN_TERM_MIN,
   LOAN_TERM_MAX,
+  CREDIT_SCORE_OPTIONS,
 } from '../constants';
 
 interface ConsolidationControlsProps {
   loanApr: number;
   loanTerm: number;
+  creditScore: CreditScoreRange | null;
   onAprChange: (v: number) => void;
   onTermChange: (v: number) => void;
 }
@@ -19,9 +22,14 @@ interface ConsolidationControlsProps {
 export default function ConsolidationControls({
   loanApr,
   loanTerm,
+  creditScore,
   onAprChange,
   onTermChange,
 }: ConsolidationControlsProps) {
+  const scoreLabel = creditScore
+    ? CREDIT_SCORE_OPTIONS.find((o) => o.value === creditScore)?.label
+    : null;
+
   return (
     <BotMessage delay={600}>
       <Typography
@@ -33,8 +41,9 @@ export default function ConsolidationControls({
           fontFamily: "'Work Sans', sans-serif",
         }}
       >
-        🎯 Now let&apos;s see what a consolidation loan could look like. Adjust
-        the rate and term:
+        {scoreLabel
+          ? `Based on your ${scoreLabel} credit score, I've set a realistic rate. Fine-tune it below:`
+          : "Let's see what a consolidation loan could look like. Adjust the rate and term:"}
       </Typography>
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.25 }}>

@@ -139,7 +139,7 @@ export default function InterestComparison({
         </Box>
       )}
 
-      {step === 2 && consolidation.interestSaved > 0 && (
+      {step === 3 && consolidation.interestSaved > 0 && (
         <Box sx={{ textAlign: 'center', mt: 2 }}>
           <PrimaryButton onClick={onAdvance} sx={{ mx: 'auto' }}>
             What If I Invest My Savings?{' '}
