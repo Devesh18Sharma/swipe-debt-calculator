@@ -2,6 +2,7 @@ import { Box } from '@mui/material';
 import CreditCardOutlined from '@mui/icons-material/CreditCardOutlined';
 import PercentOutlined from '@mui/icons-material/PercentOutlined';
 import TrendingUpOutlined from '@mui/icons-material/TrendingUpOutlined';
+import PaymentsOutlined from '@mui/icons-material/PaymentsOutlined';
 import StatCard from './StatCard';
 import type { DebtSummary } from '../types';
 import { formatFull } from '../utils/formatters';
@@ -13,6 +14,12 @@ interface DebtSummaryStatsProps {
 export default function DebtSummaryStats({
   debtSummary,
 }: DebtSummaryStatsProps) {
+  const yearsToPayoff = Math.ceil(debtSummary.monthsToPayoff / 12);
+  const payoffLabel =
+    debtSummary.monthsToPayoff >= 360
+      ? '30+ years at current payments'
+      : `Over ${yearsToPayoff} year${yearsToPayoff > 1 ? 's' : ''} at current payments`;
+
   return (
     <Box
       sx={{
@@ -38,9 +45,16 @@ export default function DebtSummaryStats({
         color="#C0392B"
       />
       <StatCard
+        label="Monthly Payment"
+        value={formatFull(Math.round(debtSummary.totalMinPayment))}
+        subtitle="Current total payments"
+        icon={PaymentsOutlined}
+        color="#5B6ABF"
+      />
+      <StatCard
         label="Interest Cost"
         value={formatFull(Math.round(debtSummary.totalInterest))}
-        subtitle={`Over ${Math.ceil(debtSummary.monthsToPayoff / 12)} years at min. payments`}
+        subtitle={payoffLabel}
         icon={TrendingUpOutlined}
         color="#C0392B"
       />

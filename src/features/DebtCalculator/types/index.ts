@@ -3,7 +3,10 @@ export interface CreditCard {
   name: string;
   balance: number;
   apr: number;
+  monthlyPayment: number;
 }
+
+export type CreditScoreRange = 'excellent' | 'good' | 'fair' | 'poor';
 
 export interface DebtSummary {
   totalBalance: number;
@@ -30,7 +33,14 @@ export interface InvestmentDataPoint {
   total: number;
 }
 
-export type Step = 1 | 2 | 3;
+export interface DebtPayoffDataPoint {
+  month: number;
+  label: string;
+  currentBalance: number;
+  loanBalance: number;
+}
+
+export type Step = 1 | 2 | 3 | 4;
 
 export interface CalculatorState {
   step: Step;
@@ -39,6 +49,7 @@ export interface CalculatorState {
   loanTermYears: number;
   userAge: number;
   annualReturn: number;
+  creditScore: CreditScoreRange | null;
 }
 
 export type CalculatorAction =
@@ -53,4 +64,5 @@ export type CalculatorAction =
   | { type: 'SET_LOAN_TERM'; payload: number }
   | { type: 'SET_USER_AGE'; payload: number }
   | { type: 'SET_ANNUAL_RETURN'; payload: number }
+  | { type: 'SET_CREDIT_SCORE'; payload: CreditScoreRange }
   | { type: 'RESET' };

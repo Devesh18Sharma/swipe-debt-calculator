@@ -4,13 +4,15 @@ import type {
   DebtSummary,
   ConsolidationResult,
   InvestmentDataPoint,
+  DebtPayoffDataPoint,
 } from '../types';
 import {
   calcMinPayment,
-  calcCreditCardPayoff,
+  calcCreditCardPayoffDynamic,
   calcLoanPayment,
   calcLoanTotalInterest,
   calcInvestmentGrowth,
+  calcDebtPayoffTimeline,
 } from '../utils/calculations';
 import { TARGET_AGE } from '../constants';
 
@@ -32,19 +34,21 @@ export function useDebtCalculations(state: CalculatorState) {
     const totalBalance = validCards.reduce((sum, c) => sum + c.balance, 0);
     const weightedApr =
       validCards.reduce((sum, c) => sum + c.apr * c.balance, 0) / totalBalance;
-    const totalMinPayment = validCards.reduce(
-      (sum, c) => sum + calcMinPayment(c.balance),
-      0,
-    );
+
+    // Use user-specified monthly payment if provided, otherwise industry-standard minimum
+    const totalMinPayment = validCards.reduce((sum, c) => {
+      if (c.monthlyPayment > 0) return sum + c.monthlyPayment;
+      return sum + calcMinPayment(c.balance, c.apr);
+    }, 0);
 
     let totalInterest = 0;
     let maxMonths = 0;
 
     validCards.forEach((c) => {
-      const result = calcCreditCardPayoff(
+      const result = calcCreditCardPayoffDynamic(
         c.balance,
         c.apr,
-        calcMinPayment(c.balance),
+        c.monthlyPayment > 0 ? c.monthlyPayment : undefined,
       );
       totalInterest += result.totalInterest;
       maxMonths = Math.max(maxMonths, result.months);
@@ -86,6 +90,24 @@ export function useDebtCalculations(state: CalculatorState) {
     };
   }, [debtSummary, state.loanApr, state.loanTermYears]);
 
+  const debtPayoffData: DebtPayoffDataPoint[] = useMemo(() => {
+    if (debtSummary.totalBalance <= 0 || !consolidation) return [];
+
+    const validCards = state.cards
+      .filter((c) => c.balance > 0 && c.apr > 0)
+      .map((c) => ({
+        balance: c.balance,
+        apr: c.apr,
+        monthlyPayment: c.monthlyPayment,
+      }));
+
+    return calcDebtPayoffTimeline(
+      validCards,
+      state.loanApr,
+      state.loanTermYears * 12,
+    );
+  }, [state.cards, state.loanApr, state.loanTermYears, debtSummary, consolidation]);
+
   const investmentData: InvestmentDataPoint[] | null = useMemo(() => {
     if (!consolidation || consolidation.interestSaved <= 0) return null;
 
@@ -102,5 +124,5 @@ export function useDebtCalculations(state: CalculatorState) {
     );
   }, [consolidation, state.userAge, state.loanTermYears, state.annualReturn]);
 
-  return { debtSummary, consolidation, investmentData };
+  return { debtSummary, consolidation, debtPayoffData, investmentData };
 }
