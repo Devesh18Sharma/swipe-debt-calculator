@@ -31,29 +31,35 @@ export default function InvestmentChart({ data }: InvestmentChartProps) {
         >
           <defs>
             <linearGradient id="investedGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#343458" stopOpacity={0.3} />
-              <stop offset="95%" stopColor="#343458" stopOpacity={0.05} />
+              <stop offset="0%" stopColor="#1B5E20" stopOpacity={0.85} />
+              <stop offset="50%" stopColor="#1B5E20" stopOpacity={0.5} />
+              <stop offset="100%" stopColor="#1B5E20" stopOpacity={0.15} />
             </linearGradient>
             <linearGradient id="growthGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#5B6ABF" stopOpacity={0.4} />
-              <stop offset="95%" stopColor="#5B6ABF" stopOpacity={0.05} />
+              <stop offset="0%" stopColor="#FBC950" stopOpacity={0.95} />
+              <stop offset="50%" stopColor="#FBC950" stopOpacity={0.7} />
+              <stop offset="100%" stopColor="#F4B545" stopOpacity={0.3} />
             </linearGradient>
           </defs>
           <CartesianGrid
-            strokeDasharray="3 3"
+            strokeDasharray="4 4"
             vertical={false}
-            stroke="#E6E6E6"
+            stroke="#F3F6F9"
           />
           <XAxis
             dataKey="label"
             stroke="#949EAB"
-            tick={{ fontSize: 11 }}
+            tick={{ fontSize: 11, fontFamily: "'Work Sans', sans-serif" }}
+            axisLine={false}
+            tickLine={false}
             interval={xInterval}
           />
           <YAxis
             tickFormatter={formatCompact}
             stroke="#949EAB"
-            tick={{ fontSize: 11 }}
+            tick={{ fontSize: 11, fontFamily: "'Work Sans', sans-serif" }}
+            axisLine={false}
+            tickLine={false}
             width={55}
           />
           <Tooltip content={<CustomTooltip />} />
@@ -66,16 +72,18 @@ export default function InvestmentChart({ data }: InvestmentChartProps) {
           <Area
             type="monotone"
             dataKey="Invested"
+            name="Your Investment"
             stackId="1"
-            stroke="#343458"
+            stroke="#1B5E20"
             fill="url(#investedGrad)"
             strokeWidth={2}
           />
           <Area
             type="monotone"
             dataKey="Growth"
+            name="Market Growth"
             stackId="1"
-            stroke="#5B6ABF"
+            stroke="#F4B545"
             fill="url(#growthGrad)"
             strokeWidth={2}
           />

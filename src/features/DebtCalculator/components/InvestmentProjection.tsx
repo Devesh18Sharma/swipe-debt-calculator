@@ -96,7 +96,7 @@ export default function InvestmentProjection({
               Investing{' '}
               {formatFull(Math.round(consolidation.monthlyPayment))}/mo &bull;{' '}
               {annualReturn}% avg return &bull;{' '}
-              {TARGET_AGE - userAge - loanTerm} years
+              {Math.max(TARGET_AGE - userAge - loanTerm, 1)} years
             </Typography>
           </Box>
 
@@ -114,13 +114,13 @@ export default function InvestmentProjection({
               label="Total Invested"
               value={formatFull(finalData.Invested)}
               icon={AttachMoneyOutlined}
-              color="#343458"
+              color="#1B5E20"
             />
             <StatCard
               label="Market Growth"
               value={formatFull(finalData.Growth)}
               icon={TrendingUpOutlined}
-              color="#5B6ABF"
+              color="#C8960C"
             />
           </Box>
         </>
