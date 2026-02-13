@@ -120,29 +120,42 @@ export default function InterestComparison({
             mt: 2.25,
             p: '14px 18px',
             borderRadius: '10px',
-            bgcolor: 'custom.redLight',
-            border: '1px solid rgba(192,57,43,0.15)',
+            bgcolor: '#FFF8E1',
+            border: '1px solid rgba(245,166,35,0.2)',
             textAlign: 'center',
           }}
         >
           <Typography
             sx={{
               fontSize: 13,
-              color: 'custom.red',
-              fontWeight: 600,
+              color: '#8B6914',
+              fontWeight: 500,
+              mb: 0.5,
               fontFamily: "'Work Sans', sans-serif",
             }}
           >
-            ⚠️ At this rate, consolidation costs more. Try lowering the APR
-            or shortening the term.
+            At these settings, a consolidation loan costs a bit more in
+            interest. Try lowering the APR or extending the term above.
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: 12,
+              color: '#8B6914',
+              opacity: 0.8,
+              fontFamily: "'Work Sans', sans-serif",
+            }}
+          >
+            But either way — there&apos;s a bright side ahead!
           </Typography>
         </Box>
       )}
 
-      {step === 3 && consolidation.interestSaved > 0 && (
+      {step === 3 && (
         <Box sx={{ textAlign: 'center', mt: 2 }}>
           <PrimaryButton onClick={onAdvance} sx={{ mx: 'auto' }}>
-            What If I Invest My Savings?{' '}
+            {consolidation.interestSaved > 0
+              ? 'What If I Invest My Savings?'
+              : "See What's Possible After Debt"}{' '}
             <TrendingUpOutlined sx={{ fontSize: 16 }} />
           </PrimaryButton>
         </Box>

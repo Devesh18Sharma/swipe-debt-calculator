@@ -1,13 +1,17 @@
 import type { InvestmentDataPoint, DebtPayoffDataPoint } from '../types';
 
-const MAX_PAYOFF_MONTHS = 360; // 30 year cap
+const MAX_PAYOFF_MONTHS = 1200; // 100-year safety cap (convergence guaranteed by min payment formula)
 
 /**
  * Industry-standard minimum payment: max(interest + 1% of balance, $25).
- * This guarantees the balance always decreases — no more Infinity bug.
+ * This guarantees principal is always positive (balance always decreases).
+ *
+ * Proof: when interest + 1%*balance > $25, principal = 1%*balance > 0.
+ * When $25 floor applies, balance is small enough that interest < $25, so principal > 0.
  */
 export function calcMinPayment(balance: number, apr: number): number {
-  const monthlyInterest = (balance * (apr / 100)) / 12;
+  if (balance <= 0) return 0;
+  const monthlyInterest = (balance * Math.max(apr, 0) / 100) / 12;
   const principalPortion = balance * 0.01;
   return Math.max(monthlyInterest + principalPortion, 25);
 }
@@ -19,6 +23,10 @@ export function calcCreditCardPayoff(
   monthlyPayment: number,
 ): { months: number; totalInterest: number } {
   if (balance <= 0) return { months: 0, totalInterest: 0 };
+  if (apr <= 0) {
+    const payment = Math.max(monthlyPayment, 25);
+    return { months: Math.ceil(balance / payment), totalInterest: 0 };
+  }
 
   let remaining = balance;
   const monthlyRate = apr / 100 / 12;
@@ -28,23 +36,14 @@ export function calcCreditCardPayoff(
   while (remaining > 0.01 && months < MAX_PAYOFF_MONTHS) {
     const interest = remaining * monthlyRate;
     totalInterest += interest;
-    const principal = monthlyPayment - interest;
 
-    // If payment doesn't cover interest, use dynamic min payment for this month
-    if (principal <= 0) {
-      const dynamicPayment = calcMinPayment(remaining, apr);
-      const dynPrincipal = dynamicPayment - interest;
-      remaining = Math.max(remaining - dynPrincipal, 0);
-    } else {
-      remaining = Math.max(remaining - principal, 0);
-    }
+    // Credit cards enforce minimum payments — use the greater of specified and minimum
+    const minPayment = calcMinPayment(remaining, apr);
+    const effectivePayment = Math.max(monthlyPayment, minPayment);
+    const principal = effectivePayment - interest;
+
+    remaining = Math.max(remaining - principal, 0);
     months++;
-  }
-
-  // If we hit the cap, estimate remaining interest
-  if (remaining > 0.01) {
-    totalInterest += remaining * monthlyRate * 12; // add 1 more year estimate
-    months = MAX_PAYOFF_MONTHS;
   }
 
   return { months, totalInterest };
@@ -53,6 +52,9 @@ export function calcCreditCardPayoff(
 /**
  * Credit card payoff using dynamic minimum payments (decreasing over time).
  * This is the real-world scenario where issuers recalculate minimum each month.
+ *
+ * If userPayment is provided but less than the minimum, the minimum is used instead
+ * — credit card companies enforce minimum payments (paying less incurs late fees).
  */
 export function calcCreditCardPayoffDynamic(
   balance: number,
@@ -60,6 +62,13 @@ export function calcCreditCardPayoffDynamic(
   userPayment?: number,
 ): { months: number; totalInterest: number } {
   if (balance <= 0) return { months: 0, totalInterest: 0 };
+  if (apr <= 0) {
+    const payment =
+      userPayment && userPayment > 0
+        ? userPayment
+        : Math.max(balance * 0.01, 25);
+    return { months: Math.ceil(balance / payment), totalInterest: 0 };
+  }
 
   let remaining = balance;
   const monthlyRate = apr / 100 / 12;
@@ -70,23 +79,19 @@ export function calcCreditCardPayoffDynamic(
     const interest = remaining * monthlyRate;
     totalInterest += interest;
 
-    // Use user-specified payment, or dynamic minimum (recalculated each month)
+    // Calculate the industry-standard minimum payment for this balance
+    const minPayment = calcMinPayment(remaining, apr);
+
+    // If user specified a payment, use the greater of their payment and the minimum.
+    // Credit card companies enforce minimums — you can't pay less without penalties.
     const payment =
       userPayment && userPayment > 0
-        ? userPayment
-        : calcMinPayment(remaining, apr);
+        ? Math.max(userPayment, minPayment)
+        : minPayment;
 
-    // Ensure payment at least covers interest + $1 principal
-    const effectivePayment = Math.max(payment, interest + 1);
-    const principal = effectivePayment - interest;
-
+    const principal = payment - interest;
     remaining = Math.max(remaining - principal, 0);
     months++;
-  }
-
-  if (remaining > 0.01) {
-    totalInterest += remaining * monthlyRate * 12;
-    months = MAX_PAYOFF_MONTHS;
   }
 
   return { months, totalInterest };
@@ -172,7 +177,6 @@ export function calcDebtPayoffTimeline(
   const loanMonthlyRate = loanApr / 100 / 12;
   const maxMonths = Math.max(loanTermMonths, MAX_PAYOFF_MONTHS);
 
-  // Record every 3 months for smoother chart, plus month 0
   data.push({
     month: 0,
     label: 'Now',
@@ -181,16 +185,14 @@ export function calcDebtPayoffTimeline(
   });
 
   for (let m = 1; m <= maxMonths; m++) {
-    // Update each card
+    // Update each card — enforce minimum payment floor (same as calcCreditCardPayoffDynamic)
     cardStates.forEach((cs) => {
       if (cs.remaining <= 0.01) return;
       const interest = cs.remaining * cs.monthlyRate;
+      const minPay = calcMinPayment(cs.remaining, cs.apr);
       const payment =
-        cs.userPayment > 0
-          ? cs.userPayment
-          : calcMinPayment(cs.remaining, cs.apr);
-      const effectivePayment = Math.max(payment, interest + 1);
-      cs.remaining = Math.max(cs.remaining - (effectivePayment - interest), 0);
+        cs.userPayment > 0 ? Math.max(cs.userPayment, minPay) : minPay;
+      cs.remaining = Math.max(cs.remaining - (payment - interest), 0);
     });
 
     // Update loan
@@ -204,9 +206,10 @@ export function calcDebtPayoffTimeline(
 
     const currentTotal = cardStates.reduce((sum, cs) => sum + cs.remaining, 0);
 
-    // Record every 3 months, or at key points
+    // Sample more sparsely for longer timelines to keep chart data reasonable
+    const interval = m <= 60 ? 3 : m <= 240 ? 6 : 12;
     if (
-      m % 3 === 0 ||
+      m % interval === 0 ||
       m === loanTermMonths ||
       currentTotal <= 0.01 ||
       loanRemaining <= 0.01

@@ -1,24 +1,43 @@
 import { Box, Typography } from '@mui/material';
 import {
-  AreaChart,
-  Area,
+  BarChart,
+  Bar,
   XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
+  Cell,
   ResponsiveContainer,
+  LabelList,
 } from 'recharts';
-import type { DebtPayoffDataPoint } from '../types';
-import { formatCompact } from '../utils/formatters';
-import CustomTooltip from './CustomTooltip';
+import type { DebtSummary } from '../types';
 
 interface DebtPayoffChartProps {
-  data: DebtPayoffDataPoint[];
+  debtSummary: DebtSummary;
+  loanTermYears: number;
 }
 
-export default function DebtPayoffChart({ data }: DebtPayoffChartProps) {
-  if (data.length < 2) return null;
+export default function DebtPayoffChart({
+  debtSummary,
+  loanTermYears,
+}: DebtPayoffChartProps) {
+  const rawCurrentYears = debtSummary.monthsToPayoff / 12;
+  const cappedCurrentYears = Math.min(Math.ceil(rawCurrentYears), 30);
+  const currentLabel =
+    rawCurrentYears > 30
+      ? '30+ yrs'
+      : `${Math.ceil(rawCurrentYears)} yr${Math.ceil(rawCurrentYears) !== 1 ? 's' : ''}`;
+  const loanLabel = `${loanTermYears} yr${loanTermYears !== 1 ? 's' : ''}`;
+  const yearsSaved = Math.max(
+    Math.round(rawCurrentYears) - loanTermYears,
+    0,
+  );
+
+  const data = [
+    { name: 'Current Cards', years: cappedCurrentYears, label: currentLabel },
+    {
+      name: 'Consolidation Loan',
+      years: loanTermYears,
+      label: loanLabel,
+    },
+  ];
 
   return (
     <Box
@@ -38,7 +57,7 @@ export default function DebtPayoffChart({ data }: DebtPayoffChartProps) {
           fontSize: 14,
           fontWeight: 600,
           color: 'custom.navy',
-          mb: 2,
+          mb: 1.5,
           textTransform: 'uppercase',
           letterSpacing: 0.5,
           fontFamily: "'Work Sans', sans-serif",
@@ -47,86 +66,91 @@ export default function DebtPayoffChart({ data }: DebtPayoffChartProps) {
         Debt Payoff Timeline
       </Typography>
 
-      <ResponsiveContainer width="100%" height={260}>
-        <AreaChart
-          data={data}
-          margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+      <Box sx={{ width: '100%', height: 220 }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            data={data}
+            margin={{ top: 30, right: 30, left: 30, bottom: 5 }}
+            barGap={20}
+          >
+            <defs>
+              <linearGradient id="barRed" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#E74C3C" stopOpacity={1} />
+                <stop offset="100%" stopColor="#C0392B" stopOpacity={1} />
+              </linearGradient>
+              <linearGradient id="barGreen" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#3DA07A" stopOpacity={1} />
+                <stop offset="100%" stopColor="#2E7D5B" stopOpacity={1} />
+              </linearGradient>
+            </defs>
+            <XAxis
+              dataKey="name"
+              axisLine={false}
+              tickLine={false}
+              tick={{
+                fontSize: 12,
+                fontFamily: "'Work Sans', sans-serif",
+                fill: '#5F6B7A',
+              }}
+            />
+            <Bar
+              dataKey="years"
+              radius={[8, 8, 0, 0]}
+              maxBarSize={90}
+              animationDuration={800}
+              animationEasing="ease-out"
+            >
+              {data.map((_entry, index) => (
+                <Cell
+                  key={_entry.name}
+                  fill={`url(#${index === 0 ? 'barRed' : 'barGreen'})`}
+                />
+              ))}
+              <LabelList
+                dataKey="label"
+                position="top"
+                style={{
+                  fontSize: 15,
+                  fontWeight: 700,
+                  fontFamily: "'Libre Franklin', sans-serif",
+                  fill: '#293A60',
+                }}
+              />
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </Box>
+
+      {yearsSaved > 0 && (
+        <Box
+          sx={{
+            mt: 1,
+            p: '10px 16px',
+            borderRadius: '8px',
+            bgcolor: 'custom.greenLight',
+            border: '1px solid rgba(46,125,91,0.12)',
+            textAlign: 'center',
+          }}
         >
-          <defs>
-            <linearGradient id="gradCurrent" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#C0392B" stopOpacity={0.25} />
-              <stop offset="95%" stopColor="#C0392B" stopOpacity={0.03} />
-            </linearGradient>
-            <linearGradient id="gradLoan" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#2E7D5B" stopOpacity={0.25} />
-              <stop offset="95%" stopColor="#2E7D5B" stopOpacity={0.03} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid
-            strokeDasharray="3 3"
-            stroke="rgba(0,0,0,0.06)"
-            vertical={false}
-          />
-          <XAxis
-            dataKey="label"
-            tick={{
-              fontSize: 11,
-              fill: '#949EAB',
+          <Typography
+            sx={{
+              fontSize: 14,
+              fontWeight: 600,
+              color: 'custom.green',
               fontFamily: "'Work Sans', sans-serif",
             }}
-            axisLine={false}
-            tickLine={false}
-            interval="preserveStartEnd"
-          />
-          <YAxis
-            tickFormatter={(v) => formatCompact(v)}
-            tick={{
-              fontSize: 11,
-              fill: '#949EAB',
-              fontFamily: "'Work Sans', sans-serif",
-            }}
-            axisLine={false}
-            tickLine={false}
-            width={55}
-          />
-          <Tooltip content={<CustomTooltip />} />
-          <Legend
-            verticalAlign="top"
-            height={30}
-            wrapperStyle={{
-              fontSize: 12,
-              fontFamily: "'Work Sans', sans-serif",
-            }}
-          />
-          <Area
-            type="monotone"
-            dataKey="currentBalance"
-            name="Current Cards"
-            stroke="#C0392B"
-            strokeWidth={2}
-            fill="url(#gradCurrent)"
-            dot={false}
-            activeDot={{ r: 4, fill: '#C0392B' }}
-          />
-          <Area
-            type="monotone"
-            dataKey="loanBalance"
-            name="Consolidation Loan"
-            stroke="#2E7D5B"
-            strokeWidth={2}
-            fill="url(#gradLoan)"
-            dot={false}
-            activeDot={{ r: 4, fill: '#2E7D5B' }}
-          />
-        </AreaChart>
-      </ResponsiveContainer>
+          >
+            Debt-free {yearsSaved}+ years sooner
+          </Typography>
+        </Box>
+      )}
 
       <Typography
         sx={{
-          fontSize: 11,
+          fontSize: 12,
           color: 'custom.muted',
-          mt: 1,
           textAlign: 'center',
+          mt: 1.5,
           fontFamily: "'Work Sans', sans-serif",
         }}
       >

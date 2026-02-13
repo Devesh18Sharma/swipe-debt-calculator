@@ -31,7 +31,7 @@ export default function DebtCalculatorPage() {
     hasValidCards,
   } = useCalculatorReducer();
 
-  const { debtSummary, consolidation, debtPayoffData, investmentData } =
+  const { debtSummary, consolidation, investmentData } =
     useDebtCalculations(state);
 
   const scrollRef = useAutoScroll([state.step, state.creditScore]);
@@ -130,8 +130,11 @@ export default function DebtCalculatorPage() {
               onTermChange={setLoanTerm}
             />
 
-            {consolidation && debtPayoffData.length > 1 && (
-              <DebtPayoffChart data={debtPayoffData} />
+            {consolidation && (
+              <DebtPayoffChart
+                debtSummary={debtSummary}
+                loanTermYears={state.loanTermYears}
+              />
             )}
 
             {consolidation && (
@@ -148,56 +151,74 @@ export default function DebtCalculatorPage() {
         )}
 
         {/* ── STEP 4: INVESTMENT PROJECTION ── */}
-        {state.step >= 4 &&
-          consolidation &&
-          consolidation.interestSaved > 0 && (
-            <>
-              <BotMessage delay={200}>
-                <Typography
-                  sx={{
-                    fontSize: 15,
-                    color: 'custom.navy',
-                    m: 0,
-                    mb: 0.5,
-                    fontWeight: 500,
-                    fontFamily: "'Work Sans', sans-serif",
-                  }}
-                >
-                  Here&apos;s where it gets exciting. Once your debt is paid off
-                  in{' '}
-                  <strong>
-                    {state.loanTermYears} year
-                    {state.loanTermYears > 1 ? 's' : ''}
-                  </strong>
-                  , what if you invested that same{' '}
-                  <strong>
-                    {formatFull(Math.round(consolidation.monthlyPayment))}/month
-                  </strong>{' '}
-                  into the market until you&apos;re 90?
-                </Typography>
-              </BotMessage>
+        {state.step >= 4 && consolidation && (
+          <>
+            <BotMessage delay={200}>
+              <Typography
+                sx={{
+                  fontSize: 15,
+                  color: 'custom.navy',
+                  m: 0,
+                  mb: 0.5,
+                  fontWeight: 500,
+                  fontFamily: "'Work Sans', sans-serif",
+                }}
+              >
+                {consolidation.interestSaved > 0 ? (
+                  <>
+                    Here&apos;s where it gets exciting. Once your debt is paid
+                    off in{' '}
+                    <strong>
+                      {state.loanTermYears} year
+                      {state.loanTermYears > 1 ? 's' : ''}
+                    </strong>
+                    , what if you invested that same{' '}
+                    <strong>
+                      {formatFull(
+                        Math.round(consolidation.monthlyPayment),
+                      )}
+                      /month
+                    </strong>{' '}
+                    into the market until you&apos;re 90?
+                  </>
+                ) : (
+                  <>
+                    Here&apos;s the bright side. Once you&apos;re debt-free,
+                    what if you invested{' '}
+                    <strong>
+                      {formatFull(
+                        Math.round(consolidation.monthlyPayment),
+                      )}
+                      /month
+                    </strong>{' '}
+                    into the market until you&apos;re 90? The results might
+                    surprise you.
+                  </>
+                )}
+              </Typography>
+            </BotMessage>
 
-              {investmentData && investmentData.length > 0 && (
-                <InvestmentProjection
-                  investmentData={investmentData}
-                  consolidation={consolidation}
-                  annualReturn={state.annualReturn}
-                  userAge={state.userAge}
-                  loanTerm={state.loanTermYears}
-                  onAgeChange={setUserAge}
-                  onReturnChange={setAnnualReturn}
-                />
-              )}
+            {investmentData && investmentData.length > 0 && (
+              <InvestmentProjection
+                investmentData={investmentData}
+                consolidation={consolidation}
+                annualReturn={state.annualReturn}
+                userAge={state.userAge}
+                loanTerm={state.loanTermYears}
+                onAgeChange={setUserAge}
+                onReturnChange={setAnnualReturn}
+              />
+            )}
 
-              {investmentData && investmentData.length > 0 && (
-                <FinalSummary
-                  consolidation={consolidation}
-                  investmentData={investmentData}
-                  onReset={reset}
-                />
-              )}
-            </>
-          )}
+            {investmentData && investmentData.length > 0 && (
+              <FinalSummary
+                consolidation={consolidation}
+                investmentData={investmentData}
+                onReset={reset}
+              />
+            )}
+          </>
+        )}
 
         <LegalDisclaimer />
       </Box>

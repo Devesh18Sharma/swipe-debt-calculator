@@ -30,23 +30,34 @@ export default function FinalSummary({
             fontFamily: "'Work Sans', sans-serif",
           }}
         >
-          💰 By consolidating your debt and then investing the payments,
-          you&apos;re not just saving{' '}
-          <Box
-            component="strong"
-            sx={{ color: 'custom.green' }}
-          >
-            {formatFull(Math.round(consolidation.interestSaved))}
-          </Box>{' '}
-          in interest — you&apos;re building{' '}
-          <Box
-            component="strong"
-            sx={{ color: 'custom.accent' }}
-          >
-            {formatFull(finalTotal)}
-          </Box>{' '}
-          in wealth. That&apos;s the SwipeSwipe way: turn overspending into
-          freedom. 🎉
+          {consolidation.interestSaved > 0 ? (
+            <>
+              💰 By consolidating your debt and then investing the payments,
+              you&apos;re not just saving{' '}
+              <Box component="strong" sx={{ color: 'custom.green' }}>
+                {formatFull(Math.round(consolidation.interestSaved))}
+              </Box>{' '}
+              in interest — you&apos;re building{' '}
+              <Box component="strong" sx={{ color: 'custom.accent' }}>
+                {formatFull(finalTotal)}
+              </Box>{' '}
+              in wealth. That&apos;s the SwipeSwipe way: turn overspending into
+              freedom. 🎉
+            </>
+          ) : (
+            <>
+              💰 Once you pay off your debt and invest{' '}
+              <Box component="strong" sx={{ color: 'custom.accent' }}>
+                {formatFull(Math.round(consolidation.monthlyPayment))}/month
+              </Box>
+              , you could build{' '}
+              <Box component="strong" sx={{ color: 'custom.accent' }}>
+                {formatFull(finalTotal)}
+              </Box>{' '}
+              in wealth. Every dollar of debt you crush is a step toward
+              financial freedom. That&apos;s the SwipeSwipe way! 🎉
+            </>
+          )}
         </Typography>
       </BotMessage>
 

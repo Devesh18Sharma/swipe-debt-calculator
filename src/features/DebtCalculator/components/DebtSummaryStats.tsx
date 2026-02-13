@@ -16,7 +16,7 @@ export default function DebtSummaryStats({
 }: DebtSummaryStatsProps) {
   const yearsToPayoff = Math.ceil(debtSummary.monthsToPayoff / 12);
   const payoffLabel =
-    debtSummary.monthsToPayoff >= 360
+    yearsToPayoff > 30
       ? '30+ years at current payments'
       : `Over ${yearsToPayoff} year${yearsToPayoff > 1 ? 's' : ''} at current payments`;
 

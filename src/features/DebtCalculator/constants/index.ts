@@ -15,7 +15,7 @@ export function createInitialState(): CalculatorState {
     loanApr: 10,
     loanTermYears: 3,
     userAge: 30,
-    annualReturn: 8,
+    annualReturn: 11.5,
     creditScore: null,
   };
 }
@@ -28,7 +28,7 @@ export const LOAN_TERM_MAX = 7;
 export const USER_AGE_MIN = 18;
 export const USER_AGE_MAX = 85;
 export const TARGET_AGE = 90;
-export const ANNUAL_RETURN_OPTIONS = [6, 8, 10, 12] as const;
+export const ANNUAL_RETURN_OPTIONS = [6, 8, 10, 11.5] as const;
 
 export const CREDIT_SCORE_OPTIONS: {
   value: CreditScoreRange;

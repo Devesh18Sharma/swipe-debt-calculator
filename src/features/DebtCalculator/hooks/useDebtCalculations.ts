@@ -4,7 +4,6 @@ import type {
   DebtSummary,
   ConsolidationResult,
   InvestmentDataPoint,
-  DebtPayoffDataPoint,
 } from '../types';
 import {
   calcMinPayment,
@@ -12,7 +11,6 @@ import {
   calcLoanPayment,
   calcLoanTotalInterest,
   calcInvestmentGrowth,
-  calcDebtPayoffTimeline,
 } from '../utils/calculations';
 import { TARGET_AGE } from '../constants';
 
@@ -35,10 +33,12 @@ export function useDebtCalculations(state: CalculatorState) {
     const weightedApr =
       validCards.reduce((sum, c) => sum + c.apr * c.balance, 0) / totalBalance;
 
-    // Use user-specified monthly payment if provided, otherwise industry-standard minimum
+    // Use user-specified monthly payment if provided, otherwise industry-standard minimum.
+    // Enforce minimum floor: credit cards require at least the minimum payment.
     const totalMinPayment = validCards.reduce((sum, c) => {
-      if (c.monthlyPayment > 0) return sum + c.monthlyPayment;
-      return sum + calcMinPayment(c.balance, c.apr);
+      const minPay = calcMinPayment(c.balance, c.apr);
+      if (c.monthlyPayment > 0) return sum + Math.max(c.monthlyPayment, minPay);
+      return sum + minPay;
     }, 0);
 
     let totalInterest = 0;
@@ -90,27 +90,11 @@ export function useDebtCalculations(state: CalculatorState) {
     };
   }, [debtSummary, state.loanApr, state.loanTermYears]);
 
-  const debtPayoffData: DebtPayoffDataPoint[] = useMemo(() => {
-    if (debtSummary.totalBalance <= 0 || !consolidation) return [];
-
-    const validCards = state.cards
-      .filter((c) => c.balance > 0 && c.apr > 0)
-      .map((c) => ({
-        balance: c.balance,
-        apr: c.apr,
-        monthlyPayment: c.monthlyPayment,
-      }));
-
-    return calcDebtPayoffTimeline(
-      validCards,
-      state.loanApr,
-      state.loanTermYears * 12,
-    );
-  }, [state.cards, state.loanApr, state.loanTermYears, debtSummary, consolidation]);
-
   const investmentData: InvestmentDataPoint[] | null = useMemo(() => {
-    if (!consolidation || consolidation.interestSaved <= 0) return null;
+    if (!consolidation) return null;
 
+    // Always show investment projection regardless of whether consolidation saves interest.
+    // The point is to show the user what's possible AFTER they're debt-free.
     const monthlyInvestment = consolidation.monthlyPayment;
     const yearsToInvest = Math.max(
       TARGET_AGE - state.userAge - state.loanTermYears,
@@ -124,5 +108,5 @@ export function useDebtCalculations(state: CalculatorState) {
     );
   }, [consolidation, state.userAge, state.loanTermYears, state.annualReturn]);
 
-  return { debtSummary, consolidation, debtPayoffData, investmentData };
+  return { debtSummary, consolidation, investmentData };
 }
