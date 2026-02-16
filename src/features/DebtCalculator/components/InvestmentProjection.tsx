@@ -114,13 +114,13 @@ export default function InvestmentProjection({
               label="Total Invested"
               value={formatFull(finalData.Invested)}
               icon={AttachMoneyOutlined}
-              color="#1B5E20"
+              color="#C8960C"
             />
             <StatCard
               label="Market Growth"
               value={formatFull(finalData.Growth)}
               icon={TrendingUpOutlined}
-              color="#C8960C"
+              color="#1B5E20"
             />
           </Box>
         </>
