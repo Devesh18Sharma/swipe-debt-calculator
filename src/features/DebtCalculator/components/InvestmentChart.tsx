@@ -31,14 +31,14 @@ export default function InvestmentChart({ data }: InvestmentChartProps) {
         >
           <defs>
             <linearGradient id="investedGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#1B5E20" stopOpacity={0.85} />
-              <stop offset="50%" stopColor="#1B5E20" stopOpacity={0.5} />
-              <stop offset="100%" stopColor="#1B5E20" stopOpacity={0.15} />
-            </linearGradient>
-            <linearGradient id="growthGrad" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#FBC950" stopOpacity={0.95} />
               <stop offset="50%" stopColor="#FBC950" stopOpacity={0.7} />
               <stop offset="100%" stopColor="#F4B545" stopOpacity={0.3} />
+            </linearGradient>
+            <linearGradient id="growthGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#1B5E20" stopOpacity={0.85} />
+              <stop offset="50%" stopColor="#1B5E20" stopOpacity={0.5} />
+              <stop offset="100%" stopColor="#1B5E20" stopOpacity={0.15} />
             </linearGradient>
           </defs>
           <CartesianGrid
@@ -74,7 +74,7 @@ export default function InvestmentChart({ data }: InvestmentChartProps) {
             dataKey="Invested"
             name="Your Investment"
             stackId="1"
-            stroke="#1B5E20"
+            stroke="#F4B545"
             fill="url(#investedGrad)"
             strokeWidth={2}
           />
@@ -83,7 +83,7 @@ export default function InvestmentChart({ data }: InvestmentChartProps) {
             dataKey="Growth"
             name="Market Growth"
             stackId="1"
-            stroke="#F4B545"
+            stroke="#1B5E20"
             fill="url(#growthGrad)"
             strokeWidth={2}
           />

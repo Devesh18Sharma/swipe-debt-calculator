@@ -1,6 +1,13 @@
 import { Box, Typography } from '@mui/material';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  Cell,
+  ResponsiveContainer,
+  LabelList,
+} from 'recharts';
 import TrendingUpOutlined from '@mui/icons-material/TrendingUpOutlined';
-import ComparisonBar from './ComparisonBar';
 import AnimatedNumber from './AnimatedNumber';
 import PrimaryButton from './PrimaryButton';
 import type { DebtSummary, ConsolidationResult, Step } from '../types';
@@ -23,12 +30,25 @@ export default function InterestComparison({
   step,
   onAdvance,
 }: InterestComparisonProps) {
+  const barData = [
+    {
+      name: 'Current Cards',
+      interest: Math.round(debtSummary.totalInterest),
+      label: formatFull(Math.round(debtSummary.totalInterest)),
+    },
+    {
+      name: `Consolidation Loan`,
+      interest: Math.round(consolidation.totalInterest),
+      label: formatFull(Math.round(consolidation.totalInterest)),
+    },
+  ];
+
   return (
     <Box
       sx={{
         bgcolor: 'custom.cardBg',
         borderRadius: '14px',
-        p: '20px 22px',
+        p: '24px 22px',
         mb: 2.5,
         border: 1,
         borderColor: 'custom.border',
@@ -41,7 +61,7 @@ export default function InterestComparison({
           fontSize: 14,
           fontWeight: 600,
           color: 'custom.navy',
-          mb: 2,
+          mb: 1.5,
           textTransform: 'uppercase',
           letterSpacing: 0.5,
           fontFamily: "'Work Sans', sans-serif",
@@ -50,40 +70,93 @@ export default function InterestComparison({
         Interest Comparison
       </Typography>
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.75 }}>
-        <ComparisonBar
-          label="Current Cards (min. payments)"
-          value={debtSummary.totalInterest}
-          maxValue={debtSummary.totalInterest}
-          color="#C0392B"
-          amount={formatFull(Math.round(debtSummary.totalInterest))}
-        />
-        <ComparisonBar
-          label={`Consolidation Loan (${loanApr}%, ${loanTerm}yr)`}
-          value={consolidation.totalInterest}
-          maxValue={debtSummary.totalInterest}
-          color="#2E7D5B"
-          amount={formatFull(Math.round(consolidation.totalInterest))}
-        />
+      {/* ── Vertical Bar Chart: Interest Amounts ── */}
+      <Box sx={{ width: '100%', height: 240 }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            data={barData}
+            margin={{ top: 35, right: 30, left: 30, bottom: 5 }}
+            barGap={20}
+          >
+            <defs>
+              <linearGradient id="barRed" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#E74C3C" stopOpacity={1} />
+                <stop offset="100%" stopColor="#C0392B" stopOpacity={1} />
+              </linearGradient>
+              <linearGradient id="barGreen" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#3DA07A" stopOpacity={1} />
+                <stop offset="100%" stopColor="#2E7D5B" stopOpacity={1} />
+              </linearGradient>
+            </defs>
+            <XAxis
+              dataKey="name"
+              axisLine={false}
+              tickLine={false}
+              tick={{
+                fontSize: 12,
+                fontFamily: "'Work Sans', sans-serif",
+                fill: '#5F6B7A',
+              }}
+            />
+            <Bar
+              dataKey="interest"
+              radius={[8, 8, 0, 0]}
+              maxBarSize={90}
+              animationDuration={800}
+              animationEasing="ease-out"
+            >
+              {barData.map((_entry, index) => (
+                <Cell
+                  key={_entry.name}
+                  fill={`url(#${index === 0 ? 'barRed' : 'barGreen'})`}
+                />
+              ))}
+              <LabelList
+                dataKey="label"
+                position="top"
+                style={{
+                  fontSize: 15,
+                  fontWeight: 700,
+                  fontFamily: "'Libre Franklin', sans-serif",
+                  fill: '#293A60',
+                }}
+              />
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
       </Box>
 
+      <Typography
+        sx={{
+          fontSize: 12,
+          color: 'custom.muted',
+          textAlign: 'center',
+          mt: 1,
+          fontFamily: "'Work Sans', sans-serif",
+        }}
+      >
+        Total interest paid &bull; {loanApr}% APR &bull; {loanTerm} yr
+        {loanTerm !== 1 ? 's' : ''} term
+      </Typography>
+
+      {/* ── Savings Highlight (hero-sized) ── */}
       {consolidation.interestSaved > 0 ? (
         <Box
           sx={{
-            mt: 2.25,
-            p: '14px 18px',
-            borderRadius: '10px',
+            mt: 3,
+            p: '28px 24px',
+            borderRadius: '14px',
             bgcolor: 'custom.greenLight',
-            border: '1px solid rgba(46,125,91,0.15)',
+            border: '1.5px solid rgba(46,125,91,0.18)',
             textAlign: 'center',
           }}
         >
           <Typography
             sx={{
-              fontSize: 13,
+              fontSize: 15,
               color: 'custom.green',
-              fontWeight: 500,
-              mb: 0.25,
+              fontWeight: 600,
+              mb: 0.75,
               fontFamily: "'Work Sans', sans-serif",
             }}
           >
@@ -91,10 +164,11 @@ export default function InterestComparison({
           </Typography>
           <Typography
             sx={{
-              fontSize: 28,
+              fontSize: 'clamp(38px, 9vw, 52px)',
               fontFamily: "'Libre Franklin', sans-serif",
               fontWeight: 800,
               color: 'custom.green',
+              lineHeight: 1.1,
             }}
           >
             <AnimatedNumber
@@ -103,10 +177,11 @@ export default function InterestComparison({
           </Typography>
           <Typography
             sx={{
-              fontSize: 12,
+              fontSize: 14,
               color: 'custom.green',
-              opacity: 0.7,
-              mt: 0.25,
+              opacity: 0.75,
+              mt: 1,
+              fontWeight: 500,
               fontFamily: "'Work Sans', sans-serif",
             }}
           >
@@ -117,9 +192,9 @@ export default function InterestComparison({
       ) : (
         <Box
           sx={{
-            mt: 2.25,
-            p: '14px 18px',
-            borderRadius: '10px',
+            mt: 3,
+            p: '24px 24px',
+            borderRadius: '14px',
             bgcolor: '#FFF8E1',
             border: '1px solid rgba(245,166,35,0.2)',
             textAlign: 'center',
@@ -151,7 +226,7 @@ export default function InterestComparison({
       )}
 
       {step === 3 && (
-        <Box sx={{ textAlign: 'center', mt: 2 }}>
+        <Box sx={{ textAlign: 'center', mt: 2.5 }}>
           <PrimaryButton onClick={onAdvance} sx={{ mx: 'auto' }}>
             {consolidation.interestSaved > 0
               ? 'What If I Invest My Savings?'

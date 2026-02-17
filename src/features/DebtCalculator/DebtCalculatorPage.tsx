@@ -7,7 +7,6 @@ import BotMessage from './components/BotMessage';
 import CardInputList from './components/CardInputList';
 import CreditScoreSelector from './components/CreditScoreSelector';
 import DebtSummaryStats from './components/DebtSummaryStats';
-import DebtPayoffChart from './components/DebtPayoffChart';
 import ConsolidationControls from './components/ConsolidationControls';
 import InterestComparison from './components/InterestComparison';
 import InvestmentProjection from './components/InvestmentProjection';
@@ -129,13 +128,6 @@ export default function DebtCalculatorPage() {
               onAprChange={setLoanApr}
               onTermChange={setLoanTerm}
             />
-
-            {consolidation && (
-              <DebtPayoffChart
-                debtSummary={debtSummary}
-                loanTermYears={state.loanTermYears}
-              />
-            )}
 
             {consolidation && (
               <InterestComparison
