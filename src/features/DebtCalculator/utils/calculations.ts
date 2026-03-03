@@ -128,7 +128,9 @@ export function calcInvestmentGrowth(
   years: number,
 ): InvestmentDataPoint[] {
   const data: InvestmentDataPoint[] = [];
-  const monthlyRate = annualReturn / 100 / 12;
+  // Exponential conversion: true monthly compounding rate from effective annual return.
+  // (1 + annual)^(1/12) - 1 is more precise than annual/12 over long horizons (Alex S. review).
+  const monthlyRate = Math.pow(1 + annualReturn / 100, 1 / 12) - 1;
   let balance = 0;
   let totalDeposits = 0;
 

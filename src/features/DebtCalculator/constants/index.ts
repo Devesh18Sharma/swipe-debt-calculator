@@ -15,7 +15,7 @@ export function createInitialState(): CalculatorState {
     loanApr: 10,
     loanTermYears: 3,
     userAge: 30,
-    annualReturn: 11.5,
+    annualReturn: 10,
     creditScore: null,
   };
 }
